@@ -145,6 +145,64 @@
         </form>
     </div>
 
+    <!-- Admin Direct Add Question Modal -->
+    <div class="modal" id="adminAddQuestionModal">
+        <div class="modal-header">
+            <h3>Add Question (Direct)</h3>
+            <button class="icon-btn" id="closeAdminAddBtn" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="adminAddForm" class="modal-body">
+            <div class="field-stack">
+                <div class="autocomplete-wrapper">
+                    <label class="field-label" for="adminTitleInput">Question Title</label>
+                    <input type="text" class="text-input" id="adminTitleInput" placeholder="e.g. Trapping Rain Water" required autocomplete="off">
+                    <div class="suggestions-dropdown" id="adminTitleSuggestions"></div>
+                </div>
+                <div class="existing-match-note" id="adminExistingInfoNote"></div>
+                <div>
+                    <label class="field-label" for="adminCategorySelect">Category</label>
+                    <select class="select-input" id="adminCategorySelect"></select>
+                </div>
+                <div>
+                    <label class="field-label" for="adminDescInput">Description / Problem Summary</label>
+                    <textarea class="text-area" id="adminDescInput" placeholder="Detailed problem statement and requirements…"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn">Add Directly to Vault</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Question Detail Modal (for all users) -->
+    <div class="modal modal-lg" id="questionDetailModal">
+        <div class="modal-header">
+            <div>
+                <h3 id="detailTitle" style="margin-bottom:6px;"></h3>
+                <span class="badge" id="detailCategory"></span>
+            </div>
+            <button class="icon-btn" id="closeDetailBtn" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-meta">
+                <span class="detail-count-badge" id="detailCount"></span>
+                <span class="detail-date" id="detailDate"></span>
+            </div>
+            <div class="detail-desc-section">
+                <h4>Problem Description</h4>
+                <div class="detail-desc-box" id="detailDescription"></div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/src/js/main.js"></script>
 
 </body>

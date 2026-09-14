@@ -8,6 +8,7 @@ let pendingNewTitle = null;
 export function populateCategoryInput() {
     const sel = document.getElementById('categoryInput');
     const reqSel = document.getElementById('reqCategorySelect');
+    const adminSel = document.getElementById('adminCategorySelect');
 
     const fillOptions = (target) => {
         if (!target) return;
@@ -22,6 +23,7 @@ export function populateCategoryInput() {
 
     fillOptions(sel);
     fillOptions(reqSel);
+    fillOptions(adminSel);
 }
 
 export function resetStepper() {

@@ -438,14 +438,16 @@ html[data-theme="light"] .card:hover {
     left: 50%;
     transform: translate(-50%, -45%) scale(0.96);
     background: var(--surface);
+    color: var(--text);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     width: 90%;
     max-width: 440px;
     box-shadow: var(--shadow);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
     z-index: 100;
 }
 
@@ -454,9 +456,11 @@ html[data-theme="light"] .card:hover {
 }
 
 .modal.show {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(-50%, -50%) scale(1);
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
 }
 
 .modal-header {
@@ -680,5 +684,79 @@ html[data-theme="light"] .card:hover {
     font-weight: 600;
     align-self: flex-start;
 }
+
+/* ---------- Clickable Cards & Detail Modal ---------- */
+
+.card.clickable-card {
+    cursor: pointer;
+}
+
+.detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.detail-count-badge {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.detail-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.detail-desc-section h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.detail-desc-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.card-footer-action {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-soft);
+}
+
+.view-details-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+}
+
+.view-details-btn:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+
 
 

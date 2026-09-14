@@ -1,5 +1,6 @@
 import { state } from '../services/state.js';
 import { escapeHtml, showToast } from '../utils/dom.js';
+import { closeQuestionDetailModal } from './grid.js';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 
@@ -21,6 +22,7 @@ export function renderAdminHeader() {
     if (isAdmin) {
         adminNav.innerHTML = `
             <span class="role-badge admin">Admin</span>
+            <button class="nav-btn request-question-btn" id="openAdminAddBtn">+ Add Question</button>
             <button class="nav-btn request-portal-btn" id="openAdminPortalBtn">
                 Requests ${pendingCount > 0 ? `<span class="req-badge">${pendingCount}</span>` : ''}
             </button>
@@ -39,11 +41,13 @@ export function renderAdminHeader() {
 function bindAdminHeaderEvents() {
     const openLoginBtn = document.getElementById('openAdminLoginBtn');
     const openPortalBtn = document.getElementById('openAdminPortalBtn');
+    const openAdminAddBtn = document.getElementById('openAdminAddBtn');
     const logoutBtn = document.getElementById('adminLogoutBtn');
     const openUserReqBtn = document.getElementById('openUserRequestBtn');
 
     if (openLoginBtn) openLoginBtn.addEventListener('click', openAdminLoginModal);
     if (openPortalBtn) openPortalBtn.addEventListener('click', openAdminPortalModal);
+    if (openAdminAddBtn) openAdminAddBtn.addEventListener('click', openAdminAddModal);
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             state.setRole('user');
@@ -51,6 +55,50 @@ function bindAdminHeaderEvents() {
         });
     }
     if (openUserReqBtn) openUserReqBtn.addEventListener('click', openUserRequestModal);
+}
+
+export function openAdminAddModal() {
+    const modal = document.getElementById('adminAddQuestionModal');
+    const scrim = document.getElementById('modalScrim');
+    if (modal) modal.classList.add('show');
+    if (scrim) scrim.classList.add('show');
+
+    const titleInput = document.getElementById('adminTitleInput');
+    const descInput = document.getElementById('adminDescInput');
+    const suggContainer = document.getElementById('adminTitleSuggestions');
+    const noteContainer = document.getElementById('adminExistingInfoNote');
+
+    if (titleInput) {
+        titleInput.value = '';
+        titleInput.focus();
+    }
+    if (descInput) descInput.value = '';
+    if (suggContainer) {
+        suggContainer.innerHTML = '';
+        suggContainer.classList.remove('show');
+    }
+    if (noteContainer) {
+        noteContainer.innerHTML = '';
+        noteContainer.classList.remove('show');
+    }
+}
+
+export function closeAdminAddModal() {
+    const modal = document.getElementById('adminAddQuestionModal');
+    const scrim = document.getElementById('modalScrim');
+    const suggContainer = document.getElementById('adminTitleSuggestions');
+    const noteContainer = document.getElementById('adminExistingInfoNote');
+
+    if (modal) modal.classList.remove('show');
+    if (scrim) scrim.classList.remove('show');
+    if (suggContainer) {
+        suggContainer.innerHTML = '';
+        suggContainer.classList.remove('show');
+    }
+    if (noteContainer) {
+        noteContainer.innerHTML = '';
+        noteContainer.classList.remove('show');
+    }
 }
 
 export function openAdminLoginModal() {
@@ -202,12 +250,56 @@ export function initAdminEvents() {
     const closeUserReqBtn = document.getElementById('closeUserRequestBtn');
     if (closeUserReqBtn) closeUserReqBtn.addEventListener('click', closeUserRequestModal);
 
+    const closeAdminAddBtn = document.getElementById('closeAdminAddBtn');
+    if (closeAdminAddBtn) closeAdminAddBtn.addEventListener('click', closeAdminAddModal);
+
     const scrim = document.getElementById('modalScrim');
     if (scrim) {
         scrim.addEventListener('click', () => {
             closeAdminLoginModal();
             closeAdminPortalModal();
             closeUserRequestModal();
+            closeAdminAddModal();
+            closeQuestionDetailModal();
+        });
+    }
+
+    // Admin direct question addition form submit
+    const adminAddForm = document.getElementById('adminAddForm');
+    if (adminAddForm) {
+        adminAddForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('adminTitleInput');
+            const descInput = document.getElementById('adminDescInput');
+            const categorySelect = document.getElementById('adminCategorySelect');
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const description = descInput ? descInput.value.trim() : '';
+            const category = categorySelect ? categorySelect.value : 'Greedy & Observations';
+
+            if (!title) return;
+
+            const reqTitleKey = title.toLowerCase().replace(/\s+/g, ' ');
+            const existing = state.questions.find(q => q.titleKey === reqTitleKey || q.title.trim().toLowerCase() === title.toLowerCase());
+
+            if (existing) {
+                await state.updateQuestion(existing.id, q => q.count++);
+                showToast(`Incremented count for <strong>${escapeHtml(existing.title)}</strong> to ×${existing.count}`);
+            } else {
+                const newItem = {
+                    id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+                    title: title,
+                    titleKey: reqTitleKey,
+                    description: description,
+                    category: category,
+                    count: 1,
+                    addedAt: Date.now()
+                };
+                await state.addQuestion(newItem);
+                showToast(`Added <strong>${escapeHtml(newItem.title)}</strong> to vault`);
+            }
+
+            closeAdminAddModal();
         });
     }
 
