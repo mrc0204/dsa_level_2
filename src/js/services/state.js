@@ -73,6 +73,9 @@ class StateManager {
     }
 
     async addQuestion(item) {
+        if (!item.id) {
+            item.id = 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        }
         this.questions.push(item);
         saveQuestions(this.questions);
         this.notify();
@@ -137,7 +140,6 @@ class StateManager {
             return { ...existing, isEncounterIncrement: true };
         } else {
             const newQuestion = {
-                id: req.id,
                 title: req.title,
                 titleKey: reqTitleKey,
                 description: req.description,

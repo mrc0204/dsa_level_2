@@ -123,11 +123,14 @@ export function closeAdminLoginModal() {
     if (scrim) scrim.classList.remove('show');
 }
 
-export function openAdminPortalModal() {
+export async function openAdminPortalModal() {
     const modal = document.getElementById('adminPortalModal');
     const scrim = document.getElementById('modalScrim');
     if (modal) modal.classList.add('show');
     if (scrim) scrim.classList.add('show');
+    if (state.isSupabaseActive) {
+        await state.loadRequests();
+    }
     renderPendingRequestsList();
 }
 

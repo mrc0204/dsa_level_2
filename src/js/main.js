@@ -1,4 +1,5 @@
 import { state } from './services/state.js';
+import { fetchQuestions } from './services/supabase.js';
 import { applyTheme } from './utils/dom.js';
 import { populateCategoryFilter, initToolbarEvents } from './components/toolbar.js';
 import { populateCategoryInput, initDrawerEvents } from './components/drawer.js';
@@ -42,6 +43,17 @@ async function initApp() {
 
     // 7. Initial Render
     renderGrid();
+
+    // 8. Auto-sync polling every 15s for cross-device updates
+    if (state.isSupabaseActive) {
+        setInterval(async () => {
+            const remoteQuestions = await fetchQuestions();
+            if (remoteQuestions && remoteQuestions.length > 0) {
+                state.setQuestions(remoteQuestions);
+            }
+            await state.loadRequests();
+        }, 15000);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
