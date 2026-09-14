@@ -43,9 +43,12 @@ export function renderGrid() {
         sort: sortSelect ? sortSelect.value : 'newest'
     });
 
+    const isAdmin = state.role === 'admin';
     const solvedCount = state.userProgress.size;
 
-    if (totalQElem) totalQElem.textContent = `${solvedCount}/${state.questions.length} Solved`;
+    if (totalQElem) {
+        totalQElem.textContent = isAdmin ? state.questions.length : `${solvedCount}/${state.questions.length} Solved`;
+    }
     if (totalEncElem) {
         const totalEnc = state.questions.reduce((sum, q) => sum + q.count, 0);
         totalEncElem.textContent = totalEnc;
@@ -69,8 +72,6 @@ export function renderGrid() {
         return;
     }
 
-    const isAdmin = state.role === 'admin';
-
     grid.innerHTML = list.map(item => {
         const qIdStr = String(item.id);
         const isCompleted = state.userProgress.has(qIdStr);
@@ -90,22 +91,25 @@ export function renderGrid() {
             `<button class="count-btn plus" data-action="inc" data-id="${item.id}" aria-label="Increase count">+</button>` :
             '';
 
-        const checkboxControl = `
+        const checkboxControl = (!isAdmin && state.currentUser) ? `
             <label class="completion-checkbox-wrapper" title="${isCompleted ? 'Mark as unsolved' : 'Mark as solved'}">
                 <input type="checkbox" class="completion-checkbox" data-action="toggle-complete" data-id="${item.id}" ${isCompleted ? 'checked' : ''}>
                 <span class="custom-checkbox"></span>
             </label>
-        `;
+        ` : '';
+
+        const solvedBadge = (!isAdmin && isCompleted) ? `<span class="solved-badge">✓ Solved</span>` : '';
+        const completedCardClass = (!isAdmin && isCompleted) ? 'completed-card' : '';
 
         return `
-            <div class="card clickable-card ${isCompleted ? 'completed-card' : ''}" data-id="${item.id}">
+            <div class="card clickable-card ${completedCardClass}" data-id="${item.id}">
                 <div class="card-top">
                     <div class="card-top-left">
                         ${checkboxControl}
                         <div class="card-title">${escapeHtml(item.title)}</div>
                     </div>
                     <div class="card-top-right">
-                        ${isCompleted ? `<span class="solved-badge">✓ Solved</span>` : ''}
+                        ${solvedBadge}
                         ${deleteBtn}
                     </div>
                 </div>

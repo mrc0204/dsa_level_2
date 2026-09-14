@@ -24,19 +24,6 @@ export function renderAdminHeader() {
 
     let navHtml = '';
 
-    if (isUser) {
-        navHtml += `
-            <div class="user-profile-pill">
-                <span class="user-niat-badge">NIAT: <strong>${escapeHtml(state.currentUser.niatId)}</strong></span>
-                <button class="nav-btn-link user-logout-btn" id="userLogoutBtn">Sign Out</button>
-            </div>
-        `;
-    } else {
-        navHtml += `
-            <button class="nav-btn auth-nav-btn" id="openUserAuthBtn">Sign In / Register</button>
-        `;
-    }
-
     if (isAdmin) {
         navHtml += `
             <span class="role-badge admin">Admin</span>
@@ -49,7 +36,15 @@ export function renderAdminHeader() {
     } else {
         if (isUser) {
             navHtml += `
+                <div class="user-profile-pill">
+                    <span class="user-niat-badge">NIAT: <strong>${escapeHtml(state.currentUser.niatId)}</strong></span>
+                    <button class="nav-btn-link user-logout-btn" id="userLogoutBtn">Sign Out</button>
+                </div>
                 <button class="nav-btn request-question-btn" id="openUserRequestBtn">+ Request Question</button>
+            `;
+        } else {
+            navHtml += `
+                <button class="nav-btn auth-nav-btn" id="openUserAuthBtn">Sign In / Register</button>
             `;
         }
         navHtml += `
