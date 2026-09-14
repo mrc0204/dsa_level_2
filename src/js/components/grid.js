@@ -12,8 +12,8 @@ export function renderGrid() {
 
     if (!grid) return;
 
-    // Check if user is logged in via User Portal
-    if (!state.currentUser) {
+    // Check if user is logged in via User Portal or in Admin Mode
+    if (!state.currentUser && state.role !== 'admin') {
         grid.innerHTML = `
             <div class="auth-gateway-card">
                 <div class="gateway-icon">
