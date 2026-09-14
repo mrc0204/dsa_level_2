@@ -19,13 +19,13 @@ export function saveQuestions(questions) {
 }
 
 export function loadSettings() {
-    const defaults = { theme: 'dark', showDecrease: false };
+    const defaults = { theme: 'light', showDecrease: false };
     try {
         const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
         if (raw) {
             const parsed = JSON.parse(raw);
             return {
-                theme: parsed.theme === 'light' ? 'light' : 'dark',
+                theme: parsed.theme === 'dark' ? 'dark' : 'light',
                 showDecrease: !!parsed.showDecrease
             };
         }

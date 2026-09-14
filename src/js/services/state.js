@@ -14,7 +14,7 @@ class StateManager {
     constructor() {
         this.questions = [];
         this.requests = [];
-        this.settings = { theme: 'dark', showDecrease: false };
+        this.settings = { theme: 'light', showDecrease: false };
         this.role = sessionStorage.getItem('dsaVault.role') || 'user'; // 'user' | 'admin'
         this.listeners = [];
         this.isSupabaseActive = isSupabaseConfigured;
