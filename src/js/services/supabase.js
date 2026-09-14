@@ -171,3 +171,110 @@ export async function updateQuestionRequestStatus(id, status) {
     return true;
 }
 
+/**
+ * Register a new user with NIAT ID & Password
+ */
+export async function registerAppUser(niatId, password) {
+    if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+    const formattedNiatId = niatId.trim().toUpperCase();
+
+    // Check if user already exists
+    const { data: existing } = await supabase
+        .from('app_users')
+        .select('id')
+        .eq('niat_id', formattedNiatId)
+        .maybeSingle();
+
+    if (existing) {
+        return { success: false, error: 'NIAT ID is already registered. Please sign in instead.' };
+    }
+
+    // Insert new user
+    const { data, error } = await supabase
+        .from('app_users')
+        .insert([{
+            niat_id: formattedNiatId,
+            password_hash: password // Lightweight hash or plain password for demo
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Supabase register user error:', error);
+        return { success: false, error: error.message || 'Failed to create account.' };
+    }
+    return { success: true, user: { niatId: data.niat_id } };
+}
+
+/**
+ * Log in user with NIAT ID & Password
+ */
+export async function loginAppUser(niatId, password) {
+    if (!supabase) return { success: false, error: 'Supabase client not initialized' };
+
+    const formattedNiatId = niatId.trim().toUpperCase();
+
+    const { data, error } = await supabase
+        .from('app_users')
+        .select('niat_id, password_hash')
+        .eq('niat_id', formattedNiatId)
+        .maybeSingle();
+
+    if (error || !data) {
+        return { success: false, error: 'Invalid NIAT ID or user not found.' };
+    }
+
+    if (data.password_hash !== password) {
+        return { success: false, error: 'Incorrect password.' };
+    }
+
+    return { success: true, user: { niatId: data.niat_id } };
+}
+
+/**
+ * Fetch progress (completed question IDs) for a user
+ */
+export async function fetchUserProgress(niatId) {
+    if (!supabase || !niatId) return [];
+
+    const formattedNiatId = niatId.trim().toUpperCase();
+
+    const { data, error } = await supabase
+        .from('user_question_progress')
+        .select('question_id, is_completed')
+        .eq('niat_id', formattedNiatId)
+        .eq('is_completed', true);
+
+    if (error) {
+        console.error('Supabase fetch user progress error:', error);
+        return [];
+    }
+    return data.map(item => String(item.question_id));
+}
+
+/**
+ * Toggle question completion progress for a user
+ */
+export async function toggleUserProgress(niatId, questionId, isCompleted) {
+    if (!supabase || !niatId || !questionId) return false;
+
+    const formattedNiatId = niatId.trim().toUpperCase();
+
+    const { error } = await supabase
+        .from('user_question_progress')
+        .upsert({
+            niat_id: formattedNiatId,
+            question_id: questionId,
+            is_completed: isCompleted,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'niat_id,question_id' });
+
+    if (error) {
+        console.error('Supabase toggle progress error:', error);
+        return false;
+    }
+    return true;
+}
+
+

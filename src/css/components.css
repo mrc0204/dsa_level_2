@@ -757,6 +757,199 @@ html[data-theme="light"] .card:hover {
     text-decoration: underline;
 }
 
+/* ---------- User Auth Modal & Tabs ---------- */
 
+.auth-modal-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--surface-2);
+    padding: 3px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
 
+.auth-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
 
+.auth-tab-btn.active {
+    background: var(--surface-3);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Auth Gateway Screen ---------- */
+
+.auth-gateway-card {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 24px;
+    text-align: center;
+    max-width: 520px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow);
+}
+
+.gateway-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+
+.gateway-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.auth-gateway-card h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.auth-gateway-card p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 440px;
+}
+
+.gateway-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.gateway-btn {
+    padding: 10px 20px;
+    font-size: 13.5px;
+}
+
+/* ---------- User Profile Pill ---------- */
+
+.user-profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 100px;
+}
+
+.user-niat-badge {
+    font-size: 12px;
+    color: var(--text);
+}
+
+.user-niat-badge strong {
+    color: var(--accent);
+}
+
+.user-logout-btn {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+/* ---------- Question Completion Checkbox & Card Styling ---------- */
+
+.card-top-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+}
+
+.card-top-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.completion-checkbox-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.completion-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 1.8px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.completion-checkbox-wrapper:hover .custom-checkbox {
+    border-color: var(--accent);
+}
+
+.completion-checkbox:checked + .custom-checkbox {
+    background: #2e7d3c;
+    border-color: #2e7d3c;
+}
+
+.completion-checkbox:checked + .custom-checkbox::after {
+    content: '';
+    width: 4px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+
+.card.completed-card {
+    border-color: rgba(46, 125, 60, 0.4);
+    background: linear-gradient(180deg, rgba(46, 125, 60, 0.04) 0%, var(--surface) 100%);
+}
+
+.solved-badge {
+    display: inline-block;
+    background: rgba(46, 125, 60, 0.15);
+    color: #8ce69f;
+    border: 1px solid #2e7d3c;
+    border-radius: 100px;
+    padding: 2px 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}

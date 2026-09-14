@@ -4,6 +4,8 @@ import { closeQuestionDetailModal } from './grid.js';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 
+let activeAuthMode = 'login'; // 'login' | 'register'
+
 export function renderAdminHeader() {
     const headerRight = document.querySelector('.top-right');
     if (!headerRight) return;
@@ -17,24 +19,45 @@ export function renderAdminHeader() {
     }
 
     const isAdmin = state.role === 'admin';
+    const isUser = Boolean(state.currentUser);
     const pendingCount = state.requests.length;
 
+    let navHtml = '';
+
+    if (isUser) {
+        navHtml += `
+            <div class="user-profile-pill">
+                <span class="user-niat-badge">NIAT: <strong>${escapeHtml(state.currentUser.niatId)}</strong></span>
+                <button class="nav-btn-link user-logout-btn" id="userLogoutBtn">Sign Out</button>
+            </div>
+        `;
+    } else {
+        navHtml += `
+            <button class="nav-btn auth-nav-btn" id="openUserAuthBtn">Sign In / Register</button>
+        `;
+    }
+
     if (isAdmin) {
-        adminNav.innerHTML = `
+        navHtml += `
             <span class="role-badge admin">Admin</span>
             <button class="nav-btn request-question-btn" id="openAdminAddBtn">+ Add Question</button>
             <button class="nav-btn request-portal-btn" id="openAdminPortalBtn">
                 Requests ${pendingCount > 0 ? `<span class="req-badge">${pendingCount}</span>` : ''}
             </button>
-            <button class="nav-btn-link" id="adminLogoutBtn">Logout</button>
+            <button class="nav-btn-link" id="adminLogoutBtn">Exit Admin Mode</button>
         `;
     } else {
-        adminNav.innerHTML = `
-            <button class="nav-btn request-question-btn" id="openUserRequestBtn">+ Request Question</button>
-            <button class="nav-btn-link" id="openAdminLoginBtn">Admin Login</button>
+        if (isUser) {
+            navHtml += `
+                <button class="nav-btn request-question-btn" id="openUserRequestBtn">+ Request Question</button>
+            `;
+        }
+        navHtml += `
+            <button class="nav-btn-link" id="openAdminLoginBtn">Admin Portal</button>
         `;
     }
 
+    adminNav.innerHTML = navHtml;
     bindAdminHeaderEvents();
 }
 
@@ -44,6 +67,16 @@ function bindAdminHeaderEvents() {
     const openAdminAddBtn = document.getElementById('openAdminAddBtn');
     const logoutBtn = document.getElementById('adminLogoutBtn');
     const openUserReqBtn = document.getElementById('openUserRequestBtn');
+    const openAuthBtn = document.getElementById('openUserAuthBtn');
+    const userLogoutBtn = document.getElementById('userLogoutBtn');
+
+    if (openAuthBtn) openAuthBtn.addEventListener('click', () => openUserAuthModal('login'));
+    if (userLogoutBtn) {
+        userLogoutBtn.addEventListener('click', async () => {
+            await state.logoutUser();
+            showToast('Signed out of user account');
+        });
+    }
 
     if (openLoginBtn) openLoginBtn.addEventListener('click', openAdminLoginModal);
     if (openPortalBtn) openPortalBtn.addEventListener('click', openAdminPortalModal);
@@ -185,6 +218,58 @@ export function closeUserRequestModal() {
     }
 }
 
+export function openUserAuthModal(mode = 'login') {
+    const modal = document.getElementById('userAuthModal');
+    const scrim = document.getElementById('modalScrim');
+    if (modal) modal.classList.add('show');
+    if (scrim) scrim.classList.add('show');
+
+    switchAuthTab(mode);
+
+    const niatInput = document.getElementById('userNiatIdInput');
+    const pwdInput = document.getElementById('userPasswordInput');
+    const errText = document.getElementById('userAuthError');
+
+    if (niatInput) {
+        niatInput.value = '';
+        niatInput.focus();
+    }
+    if (pwdInput) pwdInput.value = '';
+    if (errText) errText.textContent = '';
+}
+
+export function closeUserAuthModal() {
+    const modal = document.getElementById('userAuthModal');
+    const scrim = document.getElementById('modalScrim');
+    if (modal) modal.classList.remove('show');
+    if (scrim) scrim.classList.remove('show');
+}
+
+export function switchAuthTab(mode) {
+    activeAuthMode = mode;
+    const tabLogin = document.getElementById('authTabLogin');
+    const tabRegister = document.getElementById('authTabRegister');
+    const submitBtn = document.getElementById('userAuthSubmitBtn');
+    const introText = document.getElementById('authModalIntro');
+    const errText = document.getElementById('userAuthError');
+
+    if (errText) errText.textContent = '';
+
+    if (mode === 'register') {
+        if (tabLogin) tabLogin.classList.remove('active');
+        if (tabRegister) tabRegister.classList.add('active');
+        if (submitBtn) submitBtn.textContent = 'Create Account';
+        if (introText) introText.innerHTML = 'Create your account using your <strong>NIAT ID</strong> and a secure password.';
+    } else {
+        if (tabLogin) tabLogin.classList.add('active');
+        if (tabRegister) tabRegister.classList.remove('active');
+        if (submitBtn) submitBtn.textContent = 'Sign In';
+        if (introText) introText.innerHTML = 'Sign in with your <strong>NIAT ID</strong> and password to unlock the DSA Vault and track your progress.';
+    }
+}
+
+window.openAuthModal = openUserAuthModal;
+
 export function renderPendingRequestsList() {
     const container = document.getElementById('pendingRequestsList');
     if (!container) return;
@@ -225,6 +310,46 @@ export function renderPendingRequestsList() {
 }
 
 export function initAdminEvents() {
+    // User Auth Modal Tabs & Events
+    const tabLogin = document.getElementById('authTabLogin');
+    const tabRegister = document.getElementById('authTabRegister');
+    const closeAuthBtn = document.getElementById('closeUserAuthBtn');
+    const authForm = document.getElementById('userAuthForm');
+
+    if (tabLogin) tabLogin.addEventListener('click', (e) => { e.preventDefault(); switchAuthTab('login'); });
+    if (tabRegister) tabRegister.addEventListener('click', (e) => { e.preventDefault(); switchAuthTab('register'); });
+    if (closeAuthBtn) closeAuthBtn.addEventListener('click', closeUserAuthModal);
+
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const niatInput = document.getElementById('userNiatIdInput');
+            const pwdInput = document.getElementById('userPasswordInput');
+            const errText = document.getElementById('userAuthError');
+
+            const niatId = niatInput ? niatInput.value.trim() : '';
+            const password = pwdInput ? pwdInput.value.trim() : '';
+
+            if (!niatId || !password) return;
+
+            if (errText) errText.textContent = '';
+
+            let result;
+            if (activeAuthMode === 'register') {
+                result = await state.registerUser(niatId, password);
+            } else {
+                result = await state.loginUser(niatId, password);
+            }
+
+            if (result.success) {
+                closeUserAuthModal();
+                showToast(`Welcome, <strong>${escapeHtml(result.user.niatId)}</strong>! 👋`);
+            } else {
+                if (errText) errText.textContent = result.error || 'Authentication failed.';
+            }
+        });
+    }
+
     // Admin login form submit
     const loginForm = document.getElementById('adminLoginForm');
     if (loginForm) {
@@ -259,6 +384,7 @@ export function initAdminEvents() {
     const scrim = document.getElementById('modalScrim');
     if (scrim) {
         scrim.addEventListener('click', () => {
+            closeUserAuthModal();
             closeAdminLoginModal();
             closeAdminPortalModal();
             closeUserRequestModal();

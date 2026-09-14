@@ -70,8 +70,37 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- Modal Scrim Overlay -->
-    <div class="modal-scrim" id="modalScrim"></div>
+    <!-- User Auth Modal (Login / Register) -->
+    <div class="modal" id="userAuthModal">
+        <div class="modal-header">
+            <div class="auth-modal-tabs">
+                <button class="auth-tab-btn active" id="authTabLogin">Sign In</button>
+                <button class="auth-tab-btn" id="authTabRegister">Create Account</button>
+            </div>
+            <button class="icon-btn" id="closeUserAuthBtn" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="userAuthForm" class="modal-body">
+            <p class="modal-intro" id="authModalIntro">Sign in with your <strong>NIAT ID</strong> and password to unlock the DSA Vault and track your progress.</p>
+            <div class="field-stack">
+                <div>
+                    <label class="field-label" for="userNiatIdInput">NIAT ID</label>
+                    <input type="text" class="text-input" id="userNiatIdInput" placeholder="e.g. NIAT10123" required autocomplete="off">
+                </div>
+                <div>
+                    <label class="field-label" for="userPasswordInput">Password</label>
+                    <input type="password" class="text-input" id="userPasswordInput" placeholder="Enter password…" required>
+                </div>
+                <div class="error-text" id="userAuthError"></div>
+                <div class="modal-footer">
+                    <button type="submit" class="primary-btn" id="userAuthSubmitBtn">Sign In</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
     <!-- Admin Login Modal -->
     <div class="modal" id="adminLoginModal">

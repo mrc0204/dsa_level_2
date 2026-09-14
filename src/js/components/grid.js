@@ -12,13 +12,40 @@ export function renderGrid() {
 
     if (!grid) return;
 
+    // Check if user is logged in via User Portal
+    if (!state.currentUser) {
+        grid.innerHTML = `
+            <div class="auth-gateway-card">
+                <div class="gateway-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <h2>User Access Required</h2>
+                <p>Please sign in with your <strong>NIAT ID</strong> or create an account to view questions in the vault and track your solved progress.</p>
+                <div class="gateway-actions">
+                    <button class="primary-btn gateway-btn" id="gatewaySignInBtn">Sign In with NIAT ID</button>
+                    <button class="secondary-btn gateway-btn" id="gatewayRegisterBtn">Create Account</button>
+                </div>
+            </div>`;
+
+        const signInBtn = document.getElementById('gatewaySignInBtn');
+        const regBtn = document.getElementById('gatewayRegisterBtn');
+        if (signInBtn) signInBtn.addEventListener('click', () => window.openAuthModal('login'));
+        if (regBtn) regBtn.addEventListener('click', () => window.openAuthModal('register'));
+        return;
+    }
+
     const list = getFilteredSortedQuestions(state.questions, {
         search: searchInput ? searchInput.value : '',
         category: categoryFilter ? categoryFilter.value : '',
         sort: sortSelect ? sortSelect.value : 'newest'
     });
 
-    if (totalQElem) totalQElem.textContent = state.questions.length;
+    const solvedCount = state.userProgress.size;
+
+    if (totalQElem) totalQElem.textContent = `${solvedCount}/${state.questions.length} Solved`;
     if (totalEncElem) {
         const totalEnc = state.questions.reduce((sum, q) => sum + q.count, 0);
         totalEncElem.textContent = totalEnc;
@@ -28,7 +55,7 @@ export function renderGrid() {
         grid.innerHTML = `
             <div class="empty-state">
                 <p>Your vault is empty</p>
-                <p>Open Settings and add the first question you want to track.</p>
+                <p>No questions found in vault.</p>
             </div>`;
         return;
     }
@@ -45,6 +72,9 @@ export function renderGrid() {
     const isAdmin = state.role === 'admin';
 
     grid.innerHTML = list.map(item => {
+        const qIdStr = String(item.id);
+        const isCompleted = state.userProgress.has(qIdStr);
+
         const deleteBtn = isAdmin ? `
             <button class="delete-btn" data-action="del" data-id="${item.id}" aria-label="Delete question">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -60,11 +90,24 @@ export function renderGrid() {
             `<button class="count-btn plus" data-action="inc" data-id="${item.id}" aria-label="Increase count">+</button>` :
             '';
 
+        const checkboxControl = `
+            <label class="completion-checkbox-wrapper" title="${isCompleted ? 'Mark as unsolved' : 'Mark as solved'}">
+                <input type="checkbox" class="completion-checkbox" data-action="toggle-complete" data-id="${item.id}" ${isCompleted ? 'checked' : ''}>
+                <span class="custom-checkbox"></span>
+            </label>
+        `;
+
         return `
-            <div class="card clickable-card" data-id="${item.id}">
+            <div class="card clickable-card ${isCompleted ? 'completed-card' : ''}" data-id="${item.id}">
                 <div class="card-top">
-                    <div class="card-title">${escapeHtml(item.title)}</div>
-                    ${deleteBtn}
+                    <div class="card-top-left">
+                        ${checkboxControl}
+                        <div class="card-title">${escapeHtml(item.title)}</div>
+                    </div>
+                    <div class="card-top-right">
+                        ${isCompleted ? `<span class="solved-badge">✓ Solved</span>` : ''}
+                        ${deleteBtn}
+                    </div>
                 </div>
                 <div class="card-desc">${escapeHtml(item.description || 'No description added.')}</div>
                 <div class="card-bottom">
@@ -141,7 +184,24 @@ export function initGridEvents() {
 
     if (!grid) return;
 
-    grid.addEventListener('click', (e) => {
+    grid.addEventListener('click', async (e) => {
+        // Completion checkbox toggle
+        const checkboxWrapper = e.target.closest('.completion-checkbox-wrapper');
+        if (checkboxWrapper) {
+            e.stopPropagation();
+            const checkbox = checkboxWrapper.querySelector('.completion-checkbox');
+            if (checkbox) {
+                const qId = checkbox.getAttribute('data-id');
+                const targetQ = state.questions.find(q => String(q.id) === String(qId));
+                await state.toggleQuestionCompletion(qId);
+                const isNowDone = state.userProgress.has(String(qId));
+                if (targetQ) {
+                    showToast(isNowDone ? `Marked <strong>${escapeHtml(targetQ.title)}</strong> as solved! 🎉` : `Unmarked <strong>${escapeHtml(targetQ.title)}</strong>`);
+                }
+            }
+            return;
+        }
+
         const btn = e.target.closest('button[data-action]');
         if (btn) {
             const action = btn.getAttribute('data-action');

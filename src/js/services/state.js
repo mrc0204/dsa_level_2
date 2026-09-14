@@ -7,7 +7,11 @@ import {
     deleteQuestion,
     fetchQuestionRequests,
     insertQuestionRequest,
-    updateQuestionRequestStatus
+    updateQuestionRequestStatus,
+    registerAppUser,
+    loginAppUser,
+    fetchUserProgress,
+    toggleUserProgress
 } from './supabase.js';
 
 class StateManager {
@@ -16,6 +20,12 @@ class StateManager {
         this.requests = [];
         this.settings = { theme: 'light', showDecrease: false };
         this.role = sessionStorage.getItem('dsaVault.role') || 'user'; // 'user' | 'admin'
+        
+        // Restore user portal session
+        const storedUser = localStorage.getItem('dsaVault.currentUser');
+        this.currentUser = storedUser ? JSON.parse(storedUser) : null;
+        this.userProgress = new Set();
+
         this.listeners = [];
         this.isSupabaseActive = isSupabaseConfigured;
     }
@@ -36,7 +46,107 @@ class StateManager {
             const storedRequests = localStorage.getItem('dsaVault.requests');
             this.requests = storedRequests ? JSON.parse(storedRequests) : [];
         }
+
+        if (this.currentUser) {
+            await this.loadUserProgress();
+        }
+
         this.notify();
+    }
+
+    async loadUserProgress() {
+        if (!this.currentUser) return;
+        const niatId = this.currentUser.niatId;
+        if (this.isSupabaseActive) {
+            const completedIds = await fetchUserProgress(niatId);
+            this.userProgress = new Set(completedIds);
+        } else {
+            const localKey = `dsaVault.progress.${niatId}`;
+            const stored = localStorage.getItem(localKey);
+            this.userProgress = new Set(stored ? JSON.parse(stored) : []);
+        }
+        this.notify();
+    }
+
+    async setCurrentUser(user) {
+        this.currentUser = user;
+        if (user) {
+            localStorage.setItem('dsaVault.currentUser', JSON.stringify(user));
+            await this.loadUserProgress();
+        } else {
+            localStorage.removeItem('dsaVault.currentUser');
+            this.userProgress.clear();
+        }
+        this.notify();
+    }
+
+    async logoutUser() {
+        await this.setCurrentUser(null);
+    }
+
+    async registerUser(niatId, password) {
+        if (this.isSupabaseActive) {
+            const res = await registerAppUser(niatId, password);
+            if (res.success) {
+                await this.setCurrentUser(res.user);
+            }
+            return res;
+        } else {
+            // Local fallback
+            const userKey = `dsaVault.user.${niatId.trim().toUpperCase()}`;
+            if (localStorage.getItem(userKey)) {
+                return { success: false, error: 'NIAT ID is already registered.' };
+            }
+            const user = { niatId: niatId.trim().toUpperCase() };
+            localStorage.setItem(userKey, JSON.stringify({ ...user, password }));
+            await this.setCurrentUser(user);
+            return { success: true, user };
+        }
+    }
+
+    async loginUser(niatId, password) {
+        if (this.isSupabaseActive) {
+            const res = await loginAppUser(niatId, password);
+            if (res.success) {
+                await this.setCurrentUser(res.user);
+            }
+            return res;
+        } else {
+            // Local fallback
+            const userKey = `dsaVault.user.${niatId.trim().toUpperCase()}`;
+            const stored = localStorage.getItem(userKey);
+            if (!stored) {
+                return { success: false, error: 'User not found. Please register first.' };
+            }
+            const parsed = JSON.parse(stored);
+            if (parsed.password !== password) {
+                return { success: false, error: 'Incorrect password.' };
+            }
+            const user = { niatId: parsed.niatId };
+            await this.setCurrentUser(user);
+            return { success: true, user };
+        }
+    }
+
+    async toggleQuestionCompletion(questionId) {
+        if (!this.currentUser) return;
+        const qIdStr = String(questionId);
+        const isCurrentlyCompleted = this.userProgress.has(qIdStr);
+        const newStatus = !isCurrentlyCompleted;
+
+        if (newStatus) {
+            this.userProgress.add(qIdStr);
+        } else {
+            this.userProgress.delete(qIdStr);
+        }
+        this.notify();
+
+        if (this.isSupabaseActive) {
+            await toggleUserProgress(this.currentUser.niatId, questionId, newStatus);
+        } else {
+            const localKey = `dsaVault.progress.${this.currentUser.niatId}`;
+            localStorage.setItem(localKey, JSON.stringify(Array.from(this.userProgress)));
+        }
     }
 
     setRole(role) {
